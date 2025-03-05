@@ -19,7 +19,7 @@ def transcribe_audio_to_text_with_timestamps(file_path: str):
     ssl._create_default_https_context = ssl._create_unverified_context
 
     # Load the Whisper model
-    model = whisper.load_model("base")  # Options: "tiny", "base", "small", "medium", "large"
+    model = whisper.load_model("turbo")  # Options: ['tiny.en', 'tiny', 'base.en', 'base', 'small.en', 'small', 'medium.en', 'medium', 'large-v1', 'large-v2', 'large-v3', 'large', 'large-v3-turbo', 'turbo']
 
     # Transcribe the audio with timestamps
     print(f"Transcribing audio file: {file_path}")
@@ -39,8 +39,9 @@ def transcribe_audio_to_text_with_timestamps(file_path: str):
     return transcription
 
 
-def extractSegmentsToAudioFiles(audio_file):
-    global segment
+def extractSegmentsToAudioFiles(audio_file, timestamps):
+                                # Get file name without path and extension
+    audio_base_name=os.path.splitext(os.path.basename(audio_file))[0]
     # Extract audio segments
     audio = AudioSegment.from_file(audio_file)
     output_dir = "extracted_segments"
@@ -49,7 +50,7 @@ def extractSegmentsToAudioFiles(audio_file):
         start_ms = int(segment['start'] * 1000)  # Convert to milliseconds
         end_ms = int(segment['end'] * 1000)  # Convert to milliseconds
         segment_audio = audio[start_ms:end_ms]
-        segment_file = os.path.join(output_dir, f"segment_{i + 1}.mp3")
+        segment_file = os.path.join(output_dir, f"{audio_base_name}_{(i + 1):04d}.mp3")
         segment_audio.export(segment_file, format="mp3")
         print(f"Exported segment {i + 1} to {segment_file}")
 
@@ -67,7 +68,7 @@ if __name__ == "__main__":
 
         print(f"Transcription saved to {json_file}")
 
-        extractSegmentsToAudioFiles(audio_file)
+        extractSegmentsToAudioFiles(audio_file, timestamps)
 
         # Print the transcription in a readable format
         print("\n--- Transcription with Timestamps ---\n")
