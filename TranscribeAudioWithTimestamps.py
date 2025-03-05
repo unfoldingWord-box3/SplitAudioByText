@@ -76,7 +76,7 @@ def splitAudioFile(model, audio_file):
 def main():
     ssl._create_default_https_context = ssl._create_unverified_context
 
-    model_name = "turbo" # Options: ['tiny.en', 'tiny', 'base.en', 'base', 'small.en', 'small', 'medium.en', 'medium', 'large-v1', 'large-v2', 'large-v3', 'large', 'large-v3-turbo', 'turbo']
+    model_name = "large-v3-turbo" # Options: ['tiny.en', 'tiny', 'base.en', 'base', 'small.en', 'small', 'medium.en', 'medium', 'large-v1', 'large-v2', 'large-v3', 'large', 'large-v3-turbo', 'turbo']
     print(f"Loading the Model: {model_name}")
     model = whisper.load_model("%s" % model_name)  
 

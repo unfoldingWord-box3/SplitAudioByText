@@ -2,5 +2,6 @@
 /venv/
 /extracted_segments/
 .idea
+.idea/
+.idea/*
 /.idea/
-/.idea/*
