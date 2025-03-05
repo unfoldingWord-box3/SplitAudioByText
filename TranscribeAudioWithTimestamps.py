@@ -3,9 +3,12 @@ import os
 import ssl
 import json
 from pydub import AudioSegment
+from whisper import Whisper
 
+model_name = "large-v3" # Options: ['tiny.en', 'tiny', 'base.en', 'base', 'small.en', 'small', 'medium.en', 'medium', 'large-v1', 'large-v2', 'large-v3', 'large', 'large-v3-turbo', 'turbo']
+output_dir = "extracted_segments"
 
-def transcribe_audio_to_text_with_timestamps(model, file_path: str):
+def transcribe_audio_to_text_with_timestamps(model:Whisper, file_path: str):
     """
     Transcribes an audio file to time-stamped text using the Whisper model.
     
@@ -35,12 +38,13 @@ def transcribe_audio_to_text_with_timestamps(model, file_path: str):
 
 
 def extractSegmentsToAudioFiles(audio_file, timestamps):
-                                # Get file name without path and extension
+    global output_dir
+    
+    # Get file name without path and extension
     audio_base_name=os.path.splitext(os.path.basename(audio_file))[0]
     # Extract audio segments
     audio = AudioSegment.from_file(audio_file)
-    output_dir = "extracted_segments"
-    os.makedirs(output_dir, exist_ok=True)
+
     for i, segment in enumerate(timestamps):
         start_ms = int(segment['start'] * 1000)  # Convert to milliseconds
         end_ms = int(segment['end'] * 1000)  # Convert to milliseconds
@@ -50,13 +54,17 @@ def extractSegmentsToAudioFiles(audio_file, timestamps):
         print(f"Exported segment {i + 1} to {segment_file}")
 
 
-def splitAudioFile(model, audio_file):
+
+def splitAudioFile(model:Whisper, audio_file):
+    global output_dir
+    
     try:
         # Perform transcription
         timestamps = transcribe_audio_to_text_with_timestamps(model, audio_file)
-
+    
         # Save the transcription to a JSON file
-        json_file = "transcription_with_timestamps.json"
+        audio_base_name=os.path.basename(audio_file)
+        json_file = f"./{output_dir}/{audio_base_name}.timestamps.json"
         with open(json_file, "w") as f:
             json.dump(timestamps, f, indent=4)
 
@@ -74,12 +82,15 @@ def splitAudioFile(model, audio_file):
 
 
 def main():
+    global model_name, output_dir
+    
     ssl._create_default_https_context = ssl._create_unverified_context
 
-    model_name = "large-v3-turbo" # Options: ['tiny.en', 'tiny', 'base.en', 'base', 'small.en', 'small', 'medium.en', 'medium', 'large-v1', 'large-v2', 'large-v3', 'large', 'large-v3-turbo', 'turbo']
     print(f"Loading the Model: {model_name}")
-    model = whisper.load_model("%s" % model_name)  
+    model = whisper.load_model("%s" % model_name)
 
+    os.makedirs(output_dir, exist_ok=True)
+    
     audio_folder = "./audio"
     for file_name in sorted(os.listdir(audio_folder)):
         audio_file = os.path.join(audio_folder, file_name)
