@@ -5,7 +5,7 @@ import json
 from pydub import AudioSegment
 
 
-def transcribe_audio_to_text_with_timestamps(file_path: str):
+def transcribe_audio_to_text_with_timestamps(model, file_path: str):
     """
     Transcribes an audio file to time-stamped text using the Whisper model.
     
@@ -16,14 +16,9 @@ def transcribe_audio_to_text_with_timestamps(file_path: str):
         list: A list of dictionaries containing start time, end time, and the transcribed text.
     """
 
-    ssl._create_default_https_context = ssl._create_unverified_context
-
-    # Load the Whisper model
-    model = whisper.load_model("turbo")  # Options: ['tiny.en', 'tiny', 'base.en', 'base', 'small.en', 'small', 'medium.en', 'medium', 'large-v1', 'large-v2', 'large-v3', 'large', 'large-v3-turbo', 'turbo']
-
     # Transcribe the audio with timestamps
     print(f"Transcribing audio file: {file_path}")
-    result = model.transcribe(file_path, task="transcribe", verbose=True)
+    result = model.transcribe(file_path, verbose=True, word_timestamps=True)
 
     # Extract segments with timestamps
     segments = result.get("segments", [])
@@ -50,16 +45,15 @@ def extractSegmentsToAudioFiles(audio_file, timestamps):
         start_ms = int(segment['start'] * 1000)  # Convert to milliseconds
         end_ms = int(segment['end'] * 1000)  # Convert to milliseconds
         segment_audio = audio[start_ms:end_ms]
-        segment_file = os.path.join(output_dir, f"{audio_base_name}_{(i + 1):04d}.mp3")
+        segment_file = os.path.join(output_dir, f"{audio_base_name}_{start_ms:06d}_{end_ms:06d}.mp3")
         segment_audio.export(segment_file, format="mp3")
         print(f"Exported segment {i + 1} to {segment_file}")
 
 
-if __name__ == "__main__":
-    audio_file = "./audio/en_obs_01_128kbps.mp3"  # Convert to absolute path
+def splitAudioFile(model, audio_file):
     try:
         # Perform transcription
-        timestamps = transcribe_audio_to_text_with_timestamps(audio_file)
+        timestamps = transcribe_audio_to_text_with_timestamps(model, audio_file)
 
         # Save the transcription to a JSON file
         json_file = "transcription_with_timestamps.json"
@@ -70,11 +64,30 @@ if __name__ == "__main__":
 
         extractSegmentsToAudioFiles(audio_file, timestamps)
 
-        # Print the transcription in a readable format
-        print("\n--- Transcription with Timestamps ---\n")
-        for segment in timestamps:
-            print(f"[{segment['start']:.2f}s -> {segment['end']:.2f}s]: {segment['text']}")
+        # # Print the transcription in a readable format
+        # print("\n--- Transcription with Timestamps ---\n")
+        # for segment in timestamps:
+        #     print(f"[{segment['start']:.2f}s -> {segment['end']:.2f}s]: {segment['text']}")
 
     except Exception as e:
         print(f"An error occurred: {e}")
 
+
+def main():
+    ssl._create_default_https_context = ssl._create_unverified_context
+
+    model_name = "turbo" # Options: ['tiny.en', 'tiny', 'base.en', 'base', 'small.en', 'small', 'medium.en', 'medium', 'large-v1', 'large-v2', 'large-v3', 'large', 'large-v3-turbo', 'turbo']
+    print(f"Loading the Model: {model_name}")
+    model = whisper.load_model("%s" % model_name)  
+
+    audio_folder = "./audio"
+    for file_name in os.listdir(audio_folder):
+        audio_file = os.path.join(audio_folder, file_name)
+        if os.path.isfile(audio_file):
+            print(f"Splitting file: {audio_file}")
+            splitAudioFile(model, audio_file)
+
+
+if __name__ == "__main__":
+    
+    main()
