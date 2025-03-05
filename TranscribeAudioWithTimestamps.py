@@ -18,7 +18,7 @@ def transcribe_audio_to_text_with_timestamps(model, file_path: str):
 
     # Transcribe the audio with timestamps
     print(f"Transcribing audio file: {file_path}")
-    result = model.transcribe(file_path, verbose=True, word_timestamps=True)
+    result = model.transcribe(file_path, task="transcribe", verbose=True, word_timestamps=True)
 
     # Extract segments with timestamps
     segments = result.get("segments", [])
@@ -81,7 +81,7 @@ def main():
     model = whisper.load_model("%s" % model_name)  
 
     audio_folder = "./audio"
-    for file_name in os.listdir(audio_folder):
+    for file_name in sorted(os.listdir(audio_folder)):
         audio_file = os.path.join(audio_folder, file_name)
         if os.path.isfile(audio_file):
             print(f"Splitting file: {audio_file}")
